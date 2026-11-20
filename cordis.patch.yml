@@ -6,6 +6,16 @@
 #   windowMinutes 多久之内算"查过"
 #   maxBlocks     同一 agent 最多拦几次，超过就放行
 #   file          站点文件路径，留空 = ~/.dsh/research/sites.json
+#
+# gate.mode       闸门强度：
+#                 observe —— 判定照常跑，但不拒绝，只在 ~/.dsh/research/log.jsonl
+#                            记一条 wouldBlock=true 的「本应拦截」。
+#                 block   —— 真拦截（旧行为）。
+#                 off     —— 完全不判定（不记账、不注入提示词）。
+# gate.windowMinutes  gate 自己的查阅窗口；未填时沿用上面的 windowMinutes。
+# gate.actionRules    阶段一只落默认值，判定尚未使用（阶段二接进 guardCall）：
+#                     allow（放行）：新建文件、改插件自身目录、纯文本 .md/.txt/.json
+#                     requireLookup（需查阅）：改已有代码文件、run_cmd、install
 - insert:
     - id: research
       name: 'dsh-research'
@@ -13,3 +23,17 @@
         enabled: true
         windowMinutes: 15
         maxBlocks: 2
+        gate:
+          mode: observe
+          windowMinutes: 15
+          actionRules:
+            allow:
+              - 'write_file:create'
+              - 'write_file:self-plugin'
+              - 'write_file:text:.md'
+              - 'write_file:text:.txt'
+              - 'write_file:text:.json'
+            requireLookup:
+              - 'write_file:existing-code'
+              - 'run_cmd'
+              - 'install'
